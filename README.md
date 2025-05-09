@@ -1,65 +1,203 @@
-# Práctica Madrid Sostenible - Infraestructura de Almacenamiento para la Ciudad Inteligente
+# 🏙️ Práctica Madrid Sostenible - Infraestructura de Almacenamiento para la Ciudad Inteligente
 
+Este repositorio contiene la infraestructura y scripts necesarios para construir un **Data Lakehouse** que integra datos públicos de movilidad, urbanismo, medioambiente, energía y participación ciudadana para el análisis y la toma de decisiones sostenibles en Madrid.
 
-Este repositorio contiene la infraestructura y scripts necesarios para construir un **Data Lakehouse** que integra datos públicos de movilidad, urbanismo, medioambiente, energía y participación ciudadana para el análisis y la toma de decisiones sostenibles en Madrid. 
-
-## Diagrama de infraestructura
+## 📊 Diagrama de Infraestructura
 
 ![Arquitectura del Data Lake y Data Warehouse](diagrama_infraestructura.png)
 
+La infraestructura combina un **Data Lake multicapa** y un **Data Warehouse dimensional**, estructurado en zonas:
 
+- **RAW ZONE**: Almacena datos originales.
+- **CLEAN ZONE**: Contiene datos transformados y validados.
+- **ACCESS ZONE**: Proporciona datos listos para análisis y visualización.
 
-La infraestructura diseñada combina un **Data Lakehouse** que integra un **Data Lake multicapa** y un **Data Warehouse dimensional** para garantizar una gestión flexible, escalable y orientada al análisis de datos urbanos. En la **RAW ZONE** del Data Lake se almacenan los datos en su formato original, mientras que en la **CLEAN ZONE** se aplican transformaciones y validaciones para asegurar calidad y coherencia. Finalmente, la **ACCESS ZONE** ofrece datos listos para el análisis, que alimentan tanto notebooks como bases de datos analíticas.
+📌 **Casos de uso**:
 
-- **Pregunta 1:** Se abordará mediante un cuaderno `.ipynb`, trabajando directamente sobre los datasets ya transformados en la *ACCESS ZONE*.
-- **Pregunta 2:** Se resolverá con consultas **SQL** sobre una base de datos **PostgreSQL** que contiene las tablas generadas a partir de los datos limpios.
-- **Pregunta 3:** Se responderá mediante la construcción de **dashboards en Apache Superset**, conectados al **Data Warehouse**, con el objetivo de facilitar el análisis visual a perfiles no técnicos como ciudadanos o asociaciones vecinales.
-
-
-## Modelo de datos diseñado
-
-
-## 🧩 Procesos de Transformación ETL (Extract, Transform, Load)
-
-### Fase 1: Extracción (Extract)
-
-Contamos con 6 datasets: **trafico-horario.csv** (volumen y tipo de vehículos por hora), **bicimad-usos.csv** (trayectos y tipo de usuario), **parkings-rotacion.csv** (ocupación y ubicación de aparcamientos), **ext_aparcamientos_info.csv** (una extensión del dataset anterior), **dump-bbdd-municipal.sql** (una base de datos SQL con múltiples tablas) y **avisamadrid.json** (avisos ciudadanos geolocalizados).
-
-Los datos se cargan inicialmente en un bucket de MinIO, dentro de la zona **raw**, utilizando la función `upload_file_to_minio` definida en `utils.py`. Esta zona conserva los archivos originales tal como fueron extraídos, creando una carpeta por dataset.
-
-Antes de limpiar los datos, se realiza una conversión del archivo JSON a CSV mediante `extract_json_to_dataframe`, que convierte el archivo `avisamadrid.json` a un DataFrame. Asimismo, se utiliza `extract_sql_to_dataframes` para cargar las tablas definidas en el script SQL original, generando los datasets `distritos.csv`, `edificios_publicos.csv`, `estaciones_transporte.csv`, `lineas_transporte.csv` y `zonas_verdes.csv`. También se realiza la fusión de `ext_aparcamientos_info.csv` y `parkings-rotacion.csv` mediante una operación `merge`.
-
-Posteriormente, se aplican transformaciones específicas a cada DataFrame y se almacenan como archivos `.parquet` en la **clean zone**, estructurados por temáticas. Estas transformaciones están implementadas en funciones específicas para cada dataset, que realizan los siguientes cambios:
+- **Pregunta 1**: Cuaderno Jupyter con análisis visual desde ACCESS ZONE.
+- **Pregunta 2**: Consultas SQL en PostgreSQL sobre datos limpios.
+- **Pregunta 3**: Dashboards en **Apache Superset** para análisis visual ciudadano.
 
 ---
 
-### Fase 2: Transformación (Transform)
+## 🧩 Modelo de Datos Diseñado
 
-Siguiendo los principios de transición de la zona RAW a CLEAN, se aplicaron transformaciones centradas en:
+*(Pendiente de documentación)*
+
+---
+
+## 🔄 Procesos de Transformación ETL (Extract, Transform, Load)
+
+### 🟠 Fase 1: Extracción
+
+Datasets originales:
+
+- `trafico-horario.csv`
+- `bicimad-usos.csv`
+- `parkings-rotacion.csv` + `ext_aparcamientos_info.csv`
+- `dump-bbdd-municipal.sql`
+- `avisamadrid.json`
+
+📦 Subidos a **MinIO** (`raw` zone) mediante `upload_file_to_minio`.
+
+📄 Conversión previa:
+- `avisamadrid.json` → CSV con `extract_json_to_dataframe`
+- `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`
+- Fusión de aparcamientos con `merge`
+
+---
+
+### 🔵 Fase 2: Transformación
+
+Transformaciones aplicadas:
 
 - Estandarización de formatos
 - Eliminación de duplicados
-- Conversión de fechas y tipos numéricos
-- Aplicación de reglas de validación (no nulos, unicidad, coherencia)
+- Conversión de fechas y tipos
+- Validaciones: no nulos, unicidad, integridad
 
-#### Ejemplos específicos por dataset:
+📌 **Ejemplos por dataset**:
 
-- **Tráfico**: conversión de `fecha_hora` a datetime y eliminación de duplicados.
-- **Bicimad**: tipado de fechas y validación de columnas clave como `usuario_id`.
-- **Parkings**: unión de CSVs, conversión de coordenadas y tarifas, y deduplicación por clave compuesta.
-- **Consumo energético**: conversión de fechas y validación de métricas como `consumo_electrico_kwh`.
-- **Distritos y edificios**: validación de latitudes, años de construcción y relaciones con otras entidades.
-- **Zonas verdes**: transformación de booleanos, normalización de tipos y control de valores clave.
-- **Avisamadrid**: fechas de reporte/resolución convertidas y control de integridad mediante claves primarias.
-
-Estas transformaciones responden a las tareas comunes descritas en el marco ETL: limpieza, validación, control de nulos y tipado, tal y como se propone en la documentación académica del proyecto (PDF de referencia).
+- **Tráfico**: limpieza de duplicados, tipado de fechas
+- **Bicimad**: validación de `usuario_id`
+- **Parkings**: conversión de coordenadas y tarifas
+- **Energía**: control de métricas energéticas
+- **Edificios/Distritos**: validación de latitudes y antigüedad
+- **Zonas verdes**: normalización booleana y categórica
+- **Avisamadrid**: integridad mediante claves y fechas
 
 ---
 
-### Fase 3: Carga (Load)
+### 🟢 Fase 3: Carga
 
+*(Detalle en la sección de puesta en marcha)*
 
+---
 
+## ⚙️ Puesta en Marcha de la Infraestructura
 
+### ▶️ Arranque con Docker Compose
 
+```bash
+docker compose up -d
+```
 
+### 🐍 Dockerfile personalizado (python-client)
+
+Incluye:
+
+- pandas, pyarrow, matplotlib
+- minio, mysql-connector-python, trino
+- great-expectations, etc.
+
+Conectividad con **MinIO**, **Trino**, **MariaDB**, **PostgreSQL**.
+
+---
+
+## 🪣 Buckets de MinIO
+
+- `raw-ingestion-zone`
+- `clean-zone`
+- `process-zone`
+- `access-zone`
+- `govern-zone-metadata`
+
+---
+
+## 🚦 Flujo por Zonas
+
+### 🔁 Zona 1: Raw
+
+Carga de datos originales:
+
+```bash
+docker exec -it python-client python /scripts/01_ingest_data.py
+```
+
+### 🧹 Zona 2: Clean
+
+Limpieza y validación:
+
+```bash
+docker exec -it python-client python /scripts/02_clean_data.py
+```
+
+### 🔧 Zona 3: Process
+
+Agregaciones, KPIs, transformaciones para análisis:
+
+```bash
+docker exec -it python-client python /scripts/03_access_zone.py
+```
+
+---
+
+## 📓 Análisis Visual (Pregunta 1)
+
+Cuaderno Jupyter: `notebooks/01_congestion_vehiculos.ipynb`
+
+- Carga desde: `trafico_congestion_por_hora.parquet`
+- Herramientas: pandas, matplotlib
+- Solo análisis, sin transformación
+
+---
+
+## 🏢 Data Warehouse (PostgreSQL)
+
+### 4️⃣ Crear modelo en PostgreSQL
+
+```bash
+docker exec -it python-client python /scripts/04_create_datawarehouse.py
+```
+
+### 5️⃣ Cargar datos limpios
+
+```bash
+docker exec -it python-client python /scripts/05_load_warehouse_data.py
+```
+
+### ❓ Preguntas de Negocio (Task 2)
+
+**6️⃣ Rutas BiciMAD más populares**
+
+```bash
+docker exec -it python-client python /scripts/06_query_bicimad_routes.py
+```
+
+**7️⃣ Densidad vs Transporte**
+
+```bash
+docker exec -it python-client python /scripts/07_query_demografia_transporte.py
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+/scripts
+├── 01_ingest_data.py
+├── 02_clean_data.py
+├── 03_access_zone.py
+├── 04_create_datawarehouse.py
+├── 05_load_warehouse_data.py
+├── 06_query_bicimad_routes.py
+├── 07_query_demografia_transporte.py
+
+/notebooks
+└── 01_congestion_vehiculos.ipynb
+```
+
+---
+
+## ✅ Comprobación Final
+
+Verifica servicios activos:
+
+```bash
+docker compose ps
+```
+
+---
+
+¡Listo para trabajar con tu pipeline de datos sostenible en Madrid! 🚀
