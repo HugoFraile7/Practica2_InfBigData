@@ -35,23 +35,22 @@ Datasets originales:
 
  Suidos a **MinIO** (`raw` zone) mediante `upload_file_to_minio`.
 
-Conversión previa:
-- `avisamadrid.json` → CSV con `extract_json_to_dataframe`
-- `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`
-- Fusión de aparcamientos con `merge`
+
 
 ---
 
 ### Fase 2: Transformación
 
 Transformaciones aplicadas:
-
+- `avisamadrid.json` → CSV con `extract_json_to_dataframe`
+- `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`
+- Fusión de aparcamientos con `merge`
 - Estandarización de formatos
 - Eliminación de duplicados
 - Conversión de fechas y tipos
 - Validaciones: no nulos, unicidad, integridad
 
- **Ejemplos por dataset**:
+ **Transformaciones por dataset**:
 
 - **Tráfico**: limpieza de duplicados, tipado de fechas
 - **Bicimad**: validación de `usuario_id`
