@@ -15,9 +15,59 @@ La infraestructura diseñada combina un **Data Lake multicapa** y un **Data Ware
 
 ---
 
-##  Modelo de Datos Diseñado
+##  Modelo de Datos diseñado
+##  Modelo de Datos diseñado
 
-*(Pendiente de documentación)*
+### 1. Data Lake multicapa
+
+El ecosistema de **MinIO** se organiza en *buckets* que representan las zonas clásicas de un Data Lakehouse. Cada etapa corresponde a un sub‐directorio lógico dentro del bucket, lo que facilita el versionado y la gobernanza de los datos.
+
+| Zona | Propósito principal | Ejemplos de objetos (clave S3) |
+|------|---------------------|--------------------------------|
+| **`raw-ingestion-zone`** | Copia bit-a-bit de las fuentes originales; sin tocar. | `trafico/trafico-horario.csv`, `parking/parkings-rotacion.csv`, `avisamadrid/avisamadrid.json`, `dump-bbdd-municipal/dump-bbdd-municipal.sql` |
+| **`clean-zone`** | Datos validados y tipados; reglas de calidad (no nulos, dominios, formatos). | `bicimad/bicimad-usos.parquet`, `demografia/distritos.parquet`, `movilidad/estaciones_transporte.parquet` |
+| **`process-zone`** | Enriquecimientos, *joins* y KPIs intermedios. | `movilidad/estaciones_distritos_merged.parquet` |
+| **`access-zone`** | Datasets finales listos para BI/ML; granulado acorde a la pregunta de negocio. | `trafico/trafico_congestion_por_hora.parquet`, `bicimad/bicimad-usos.parquet` (curado) |
+| **`govern-zone-metadata`** | Catálogo, linaje y KPI de calidad (logs de transformación). | `logs/*.json` generados por `log_data_transformation` |
+
+**Flujo ETL resumido**
+
+1. **Extracción** – `01_ingest_data.py` sube cada fichero a `raw-ingestion-zone`.  
+2. **Limpieza** – `02_clean_data.py` aplica validaciones por dataset y publica como Parquet en `clean-zone`.  
+3. **Procesado** – `03_access_zone.py` agrega, elimina columnas y genera *joins* antes de mover a `process-` y `access-zone`.  
+4. **Gobernanza** – Cada paso escribe un log de linaje y métricas de calidad en `govern-zone-metadata`.
+
+> **Buenas prácticas aplicadas**  
+> * Formatos columnares (Parquet) a partir de *clean* para reducir I/O.  
+> * Nomenclatura `<dominio>/<dataset>.parquet` que evita colisiones y simplifica `SELECT * FROM s3://...` en Trino.  
+> * Validaciones declarativas (reglas `no_nulls`, `unique`, rangos) centralizadas en `validate_data_quality`.
+
+---
+
+### 2. Data Warehouse (PostgreSQL)
+
+Se implementa un **esquema en estrella** con hechos separados por dominio de movilidad y aparcamiento. Las claves sustitutas (`*_sk`) mantienen la integridad temporal y permiten *slowly-changing dimensions* en futuras iteraciones.
+El diagrama del primer data warehouse con el que se responde a la primera pregunta del segundo objetivo es el siguiente :
+![Data Warehouse de viajes](fact_viaje.png)
+El diagrama del segundo data warehouse con el que se responde a la segunda pregunta del segundo objetivo y al tercer objetivo es el siguiente:
+![Data Warehouse de parkings y distritos](fact_parking.png)
+#### Implementación
+
+Los *scripts* de infraestructura (`06_create_datawarehouse.py`) crean el esquema en el contenedor `bbdd_postgre` y añaden índices sobre las claves foráneas para optimizar *star joins*.
+
+---
+
+### 3. Correspondencia Lake → Warehouse
+
+| Dataset *access-zone* | Tabla DW | Transformación adicional |
+|-----------------------|----------|--------------------------|
+| `bicimad/bicimad-usos.parquet` | `stg_viaje → fact_viaje` | Carga incremental con deduplicación de viajes. |
+| `parking/merged-parkings.parquet` | `dim_aparcamiento`, `fact_parking_ocupacion` | Split dimensión / hechos + enriquecimiento distritos. |
+| `demografia/distritos.parquet` | `dim_distrito` | Conversión tipo `NUMERIC` y agregación población. |
+| `movilidad/estaciones_transporte.parquet` | `dim_estacion`, `dim_transporte` | División metro / bus / cercanías según `tipo`. |
+
+Esta trazabilidad facilita reproducir el pipeline completo y auditar cada métrica de negocio desde la consulta en Superset hasta el fichero bruto original.
+
 
 ---
 
