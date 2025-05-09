@@ -1,8 +1,8 @@
-# 🏙️ Práctica Madrid Sostenible - Infraestructura de Almacenamiento para la Ciudad Inteligente
+# Práctica Madrid Sostenible - Infraestructura de Almacenamiento para la Ciudad Inteligente
 
 Este repositorio contiene la infraestructura y scripts necesarios para construir un **Data Lakehouse** que integra datos públicos de movilidad, urbanismo, medioambiente, energía y participación ciudadana para el análisis y la toma de decisiones sostenibles en Madrid.
 
-## 📊 Diagrama de Infraestructura
+## Diagrama de Infraestructura
 
 ![Arquitectura del Data Lake y Data Warehouse](diagrama_infraestructura.png)
 
@@ -20,15 +20,15 @@ La infraestructura combina un **Data Lake multicapa** y un **Data Warehouse dime
 
 ---
 
-## 🧩 Modelo de Datos Diseñado
+##  Modelo de Datos Diseñado
 
 *(Pendiente de documentación)*
 
 ---
 
-## 🔄 Procesos de Transformación ETL (Extract, Transform, Load)
+##  Procesos de Transformación ETL (Extract, Transform, Load)
 
-### 🟠 Fase 1: Extracción
+###  Fase 1: Extracción
 
 Datasets originales:
 
@@ -38,16 +38,16 @@ Datasets originales:
 - `dump-bbdd-municipal.sql`
 - `avisamadrid.json`
 
-📦 Subidos a **MinIO** (`raw` zone) mediante `upload_file_to_minio`.
+ Suidos a **MinIO** (`raw` zone) mediante `upload_file_to_minio`.
 
-📄 Conversión previa:
+Conversión previa:
 - `avisamadrid.json` → CSV con `extract_json_to_dataframe`
 - `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`
 - Fusión de aparcamientos con `merge`
 
 ---
 
-### 🔵 Fase 2: Transformación
+### Fase 2: Transformación
 
 Transformaciones aplicadas:
 
@@ -56,7 +56,7 @@ Transformaciones aplicadas:
 - Conversión de fechas y tipos
 - Validaciones: no nulos, unicidad, integridad
 
-📌 **Ejemplos por dataset**:
+ **Ejemplos por dataset**:
 
 - **Tráfico**: limpieza de duplicados, tipado de fechas
 - **Bicimad**: validación de `usuario_id`
@@ -68,45 +68,39 @@ Transformaciones aplicadas:
 
 ---
 
-### 🟢 Fase 3: Carga
+### Fase 3: Carga
 
-*(Detalle en la sección de puesta en marcha)*
+1. **Clonar el repositorio**  
+   ```bash
+   git clone https://github.com/HugoFraile7/Practica2_InfBigData
+   cd proyecto-madridsostenible
+
 
 ---
 
-## ⚙️ Puesta en Marcha de la Infraestructura
+## Puesta en Marcha de la Infraestructura
 
-### ▶️ Arranque con Docker Compose
+### Arranque con Docker Compose
 
 ```bash
-docker compose up -d
+docker compose up -d 
 ```
 
-### 🐍 Dockerfile personalizado (python-client)
+Crea en docker todos los contenedores necesarios para el desarrollo de la práctica(Conectividad con **MinIO**, **Trino**, **MariaDB**, **PostgreSQL**) además desde un **Dcokerfile** auxiliar instala todas las dependecias necearias.
 
-Incluye:
 
-- pandas, pyarrow, matplotlib
-- minio, mysql-connector-python, trino
-- great-expectations, etc.
-
-Conectividad con **MinIO**, **Trino**, **MariaDB**, **PostgreSQL**.
-
----
-
-## 🪣 Buckets de MinIO
 
 - `raw-ingestion-zone`
 - `clean-zone`
 - `process-zone`
 - `access-zone`
-- `govern-zone-metadata`
+- `govern-zone-metadata(información de realización de la práctica)`
 
 ---
 
-## 🚦 Flujo por Zonas
+## Flujo por Zonas
 
-### 🔁 Zona 1: Raw
+### Zona 1: Raw
 
 Carga de datos originales:
 
@@ -114,15 +108,15 @@ Carga de datos originales:
 docker exec -it python-client python /scripts/01_ingest_data.py
 ```
 
-### 🧹 Zona 2: Clean
+### Zona 2: Clean
 
-Limpieza y validación:
+Limpieza y normalización de los datos:
 
 ```bash
 docker exec -it python-client python /scripts/02_clean_data.py
 ```
 
-### 🔧 Zona 3: Process
+### Zona 3: Process
 
 Agregaciones, KPIs, transformaciones para análisis:
 
@@ -132,39 +126,37 @@ docker exec -it python-client python /scripts/03_access_zone.py
 
 ---
 
-## 📓 Análisis Visual (Pregunta 1)
+## Análisis Visual (Pregunta 1)
 
 Cuaderno Jupyter: `notebooks/01_congestion_vehiculos.ipynb`
 
-- Carga desde: `trafico_congestion_por_hora.parquet`
-- Herramientas: pandas, matplotlib
-- Solo análisis, sin transformación
+-En este cuaderno se carga el dataset **trafico.parquet**, y se realizan las visualizaciones pertinentes para responder a la primera cuestión.
 
 ---
 
-## 🏢 Data Warehouse (PostgreSQL)
+## Data Warehouse (PostgreSQL)
 
-### 4️⃣ Crear modelo en PostgreSQL
-
+### 4️ Crear modelo en PostgreSQL
+-Se crean las tablas necesarias.
 ```bash
 docker exec -it python-client python /scripts/04_create_datawarehouse.py
 ```
 
-### 5️⃣ Cargar datos limpios
-
+### 5️ Carga datos
+-Se insertan los datos en las tablas previamente creadas en la etapa anterior.
 ```bash
 docker exec -it python-client python /scripts/05_load_warehouse_data.py
 ```
 
-### ❓ Preguntas de Negocio (Task 2)
+### Preguntas de Negocio (Task 2)
 
-**6️⃣ Rutas BiciMAD más populares**
+** 6️ Rutas BiciMAD más populares**
 
 ```bash
 docker exec -it python-client python /scripts/06_query_bicimad_routes.py
 ```
 
-**7️⃣ Densidad vs Transporte**
+** Densidad vs Transporte**
 
 ```bash
 docker exec -it python-client python /scripts/07_query_demografia_transporte.py
@@ -172,7 +164,7 @@ docker exec -it python-client python /scripts/07_query_demografia_transporte.py
 
 ---
 
-## 📁 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 /scripts
@@ -186,18 +178,4 @@ docker exec -it python-client python /scripts/07_query_demografia_transporte.py
 
 /notebooks
 └── 01_congestion_vehiculos.ipynb
-```
-
----
-
-## ✅ Comprobación Final
-
-Verifica servicios activos:
-
-```bash
-docker compose ps
-```
-
----
-
-¡Listo para trabajar con tu pipeline de datos sostenible en Madrid! 🚀
+🚀
