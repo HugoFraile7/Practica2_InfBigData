@@ -233,13 +233,13 @@ docker exec -it python-client python /scripts/05_load_warehouse_data.py
 ** 6️ Rutas BiciMAD más populares**
 
 ```bash
-docker exec -it python-client python /scripts/06_query_bicimad_routes.py
+docker exec -it python-client python /scripts/06_query_data.py
 ```
 
 ** Densidad vs Transporte**
 
 ```bash
-docker exec -it python-client python /scripts/07_query_demografia_transporte.py
+docker exec -it python-client python /scripts/07_distritos_transporte.py
 ```
 ### Pregunta de Negocio (Task 3)
 
