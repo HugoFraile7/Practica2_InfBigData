@@ -162,6 +162,7 @@ Transformaciones aplicadas
 ### Arranque con Docker Compose
 
 ```bash
+docker network create datalake-network
 docker compose up -d 
 ```
 
