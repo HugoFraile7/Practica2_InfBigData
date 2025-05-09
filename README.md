@@ -241,7 +241,9 @@ docker exec -it python-client python /scripts/06_query_bicimad_routes.py
 ```bash
 docker exec -it python-client python /scripts/07_query_demografia_transporte.py
 ```
+### Pregunta de Negocio (Task 3)
 
+Se ejecuta usando el segundo Data Warehouse y Apache Superset obteniendo los siguientes dashboards:
 ---
 
 ##  Estructura del Proyecto
