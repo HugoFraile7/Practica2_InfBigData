@@ -244,6 +244,7 @@ docker exec -it python-client python /scripts/07_query_demografia_transporte.py
 ### Pregunta de Negocio (Task 3)
 
 Se ejecuta usando el segundo Data Warehouse y Apache Superset obteniendo los siguientes dashboards:
+![Dashboards de superset](superset.png)
 ---
 
 ##  Estructura del Proyecto
