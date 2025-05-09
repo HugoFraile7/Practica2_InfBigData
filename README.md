@@ -91,14 +91,49 @@ Datasets originales:
 
 ### Fase 2: Transformación
 
-Transformaciones aplicadas:
-- `avisamadrid.json` → CSV con `extract_json_to_dataframe`
-- `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`
-- Fusión de aparcamientos con `merge`
-- Estandarización de formatos
-- Eliminación de duplicados
-- Conversión de fechas y tipos
-- Validaciones: no nulos, unicidad, integridad
+Transformaciones aplicadas
+---------------------------------
+
+1. **Conversión de formatos y normalización**  
+   - `avisamadrid.json` → CSV con `extract_json_to_dataframe`  
+   - `dump-bbdd-municipal.sql` → varios `.csv` con `extract_sql_to_dataframes`  
+   - Estandarización de formatos, conversión de fechas y tipos, y eliminación de duplicados en todos los datasets.
+
+2. **Datasets de movilidad y tráfico**  
+   - **Tráfico**  
+     - Carga desde `clean-zone/trafico/trafico-horario.parquet`.  
+     - Conversión de `fecha_hora` a `datetime` y extracción del campo `hora`.  
+     - Mapeo categórico `nivel_congestion` → escala numérica (1 = Baja … 4 = Muy Alta).  
+     - Agregación por `hora` (`sum` de vehículos y `mean` de velocidad media y nivel de congestión).  
+     - Resultado: `access-zone/trafico/trafico_congestion_por_hora.parquet` con metadatos de linaje.
+     
+   - **BiciMAD**  
+     - Carga desde `clean-zone/bicimad/bicimad-usos.parquet`.  
+     - Eliminación de columna técnica `id`, preservando las columnas de fecha.  
+     - Resultado: `access-zone/bicimad/bicimad-usos.parquet`.
+
+3. **Datasets de estacionamiento**  
+   - **Parkings rotacionales**  
+     - Carga `clean-zone/parking/merged-parkings.parquet` y `clean-zone/demografia/distritos.parquet`.  
+     - Cálculo de `dia_semana` y eliminación de `plazas_ocupadas/libres`.  
+     - Uso de **k-d tree** (`scipy.spatial.cKDTree`) para asignar cada aparcamiento al distrito más cercano según coordenadas (`latitud`, `longitud`).  
+     - Resultado: `access-zone/parking/parkings.parquet` con la columna `distrito_id` añadida.
+
+4. **Datasets de referencia geográfica**  
+   - **Estaciones de transporte**  
+     - Carga desde `clean-zone/movilidad/estaciones_transporte.parquet`.  
+     - Eliminación de columna técnica `id`.  
+   - **Distritos**  
+     - Carga desde `clean-zone/demografia/distritos.parquet`.  
+     - Eliminación de columna técnica `id`.  
+     - Almacenamiento adicional en `processed/demografia/distritos.parquet` para uso en BI.
+
+5. **Gobernanza y linaje**  
+   - Cada transformación invoca `log_data_transformation` para registrar origen, destino y descripción de la operación en `govern-zone-metadata/logs/*.json`.  
+   - Metadatos (descripción, propósito, fuente, tipo de agregación) se adjuntan como *object metadata* en MinIO al subir cada Parquet.
+
+> **Resultado neto**: datasets curados y enriquecidos en la **ACCESS ZONE**, listos para alimentar visualizaciones en notebooks y para su carga incremental en el Data Warehouse.
+
 
  **Transformaciones por dataset**:
 
