@@ -5,7 +5,7 @@ Este repositorio contiene la infraestructura y scripts necesarios para construir
 
 ## Diagrama de infraestructura
 
-
+![Arquitectura del Data Lake y Data Warehouse](diagrama_infraestructura.png)
 
 
 ## Modelo de datos diseñado
