@@ -57,3 +57,9 @@ Estas transformaciones responden a las tareas comunes descritas en el marco ETL:
 ---
 
 ### Fase 3: Carga (Load)
+
+
+
+
+
+
